@@ -3,6 +3,8 @@ server:
 spring:
   application:
     name: FlightService   # Name of the microservice
+  config:
+    import: optional:configserver:http://localhost:8082
   datasource:
     url: jdbc:mysql://localhost:3306/akhil
     username: root
@@ -15,14 +17,14 @@ spring:
       database-platform: org.hibernate.dialect.MySQL8Dialect
 
 eureka:
-  client:
-    register-with-eureka: true
-    fetch-registry: true
-    service-url:
-      defaultZone: http://localhost:8761/eureka/
-  instance:
-    prefer-ip-address: true
-    hostname: localhost
+    instance:
+        prefer-ip-address: true
+        hostname: localhost
+    client:
+        register-with-eureka: true
+        fetch-registry: true
+        service-url:
+          defaultZone: http://localhost:8761/eureka/
 
 management:
   endpoints:
@@ -33,6 +35,5 @@ management:
 logging:
   level:
     org.springframework: INFO
-    com.netflix.discovery: DEBUG
     org.springframework.cloud: DEBUG
 

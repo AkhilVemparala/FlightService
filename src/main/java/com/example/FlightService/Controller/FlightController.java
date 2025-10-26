@@ -1,10 +1,12 @@
 package com.example.FlightService.Controller;
 
 import com.example.FlightService.Entity.Flight;
+import com.example.FlightService.Model.FlightResponseModel;
 import com.example.FlightService.Model.SearchFlights;
 import com.example.FlightService.Service.FlightService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -43,8 +45,14 @@ public class FlightController {
     }
 
     @PutMapping("/{flightId}/{seats}")
-    public ResponseEntity<Void> updateSeatCount(@PathVariable String flightId, @PathVariable int seats) {
+    public ResponseEntity<FlightResponseModel> updateSeatCount(@PathVariable String flightId, @PathVariable int seats) {
         flightService.updateSeatCount(flightId, seats);
-        return ResponseEntity.ok().build();
+        return new ResponseEntity<>(new FlightResponseModel(true, "Seat count updated"), HttpStatus.OK);
+    }
+
+    @PostMapping("/addFlight")
+    public ResponseEntity<FlightResponseModel> addFlights(@RequestBody Flight flight) {
+        flightService.addFlight(flight);
+        return new ResponseEntity<>(new FlightResponseModel(true, "Flight details added"), HttpStatus.OK);
     }
 }

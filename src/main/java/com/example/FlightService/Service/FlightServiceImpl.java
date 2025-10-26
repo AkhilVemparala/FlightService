@@ -4,7 +4,11 @@ import com.example.FlightService.Entity.Flight;
 import com.example.FlightService.Exception.FlightServiceException;
 import com.example.FlightService.Model.SearchFlights;
 import com.example.FlightService.Repository.FlightRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -12,12 +16,14 @@ import java.util.Date;
 import java.util.List;
 
 @Service
+@Slf4j
 public class FlightServiceImpl implements FlightService {
 
     @Autowired
     private FlightRepository flightRepository;
 
     @Override
+    @Cacheable("sources")
     public List<String> getSources() {
         List<String> sources = flightRepository.findDistinctSources();
         if (sources == null || sources.isEmpty()) {
@@ -56,7 +62,8 @@ public class FlightServiceImpl implements FlightService {
     }
 
     @Override
-    public void updateSeatCount(String flightId, int seatsToBook) {
+    @CachePut(value = "flight", key = "#flightId")
+    public Flight updateSeatCount(String flightId, int seatsToBook) {
         Flight flight = flightRepository.findById(flightId)
                 .orElseThrow(() -> new FlightServiceException("Flight not found: " + flightId));
         int updatedCount = flight.getSeatCount() - seatsToBook;
@@ -64,12 +71,23 @@ public class FlightServiceImpl implements FlightService {
             throw new FlightServiceException("Not enough seats available");
         }
         flight.setSeatCount(updatedCount);
-        flightRepository.save(flight);
+        return flightRepository.save(flight);
     }
 
     @Override
+    @Cacheable(value = "flight", key = "#flightId")
     public Flight getFlightById(String flightId) {
         return flightRepository.findById(flightId)
                 .orElseThrow(() -> new FlightServiceException("Flight not found: " + flightId));
+    }
+
+    @Override
+    @CacheEvict(value = "flight", key = "#flight.flightId")
+    public Boolean addFlight(Flight flight) {
+        if (flightRepository.existsById(flight.getFlightId())) {
+            throw new FlightServiceException("Flight with ID " + flight.getFlightId() + " already exists");
+        }
+        flightRepository.save(flight);
+        return true;
     }
 }
